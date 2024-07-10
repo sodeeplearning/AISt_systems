@@ -254,7 +254,7 @@ class Recognizer:
                     if write_logs:
                         self.log[str(datetime.now())] = min_key
                         if len(self.log.keys()) == write_logs_every:
-                            self.save_log(path_for_saving=os.path.join(saving_dir, str(datetime.now())),
+                            self.save_log(path_for_saving=os.path.join(saving_dir, str(datetime.now()) + '.json'),
                                           clear_after_saving=True)
         vdo.release()
 
@@ -402,3 +402,7 @@ class Unlocker(Recognizer):
             else:
                 return True
         return False
+
+rec = Recognizer()
+rec.add_face()
+rec.launch(write_logs=True, write_logs_every=10)
