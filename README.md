@@ -4,6 +4,7 @@ Artificial Intelligence Security
 With Git:
 ```bash
 git clone https://github.com/sodeeplearning/aist_systems/tree/main
+python -m pip -r install requirements.txt
 ```
 ## Modules:
 This library has some modules that have different functional
