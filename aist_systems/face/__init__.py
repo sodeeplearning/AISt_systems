@@ -5,10 +5,9 @@ import requests
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from types import MethodType
-import pickle
 from time import sleep
-import utils
-from utils import _load, _save
+from aist_systems import utils
+from aist_systems.utils import _load, _save
 from datetime import datetime
 import json
 
