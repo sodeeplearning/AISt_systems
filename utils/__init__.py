@@ -1,4 +1,5 @@
 import hashlib
+import pickle
 
 def get_hash(object : str,
             hash_method : str = 'sha256'):
@@ -32,3 +33,11 @@ def get_hash(object : str,
 
     hash_func = mapping[hash_method]
     return hash_func(b'f"{object}"').hexdigest()
+
+def _save(object, path):
+    with open(path, 'wb') as f:
+        pickle.dump(object, f)
+
+def _load(path):
+    with open(path, 'rb') as f:
+        return pickle.load(f)

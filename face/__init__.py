@@ -1,3 +1,5 @@
+import os.path
+
 import cv2
 import requests
 import torch
@@ -6,6 +8,9 @@ from types import MethodType
 import pickle
 from time import sleep
 import utils
+from utils import _load, _save
+from datetime import datetime
+import json
 
 def _detect_box(self, img, save_path=None):
     # Detect faces
@@ -18,14 +23,6 @@ def _detect_box(self, img, save_path=None):
     # Extract faces
     faces = self.extract(img, batch_boxes, save_path)
     return batch_boxes, faces
-
-def _save(object, path):
-    with open(path, 'wb') as f:
-        pickle.dump(object, f)
-
-def _load(path):
-    with open(path, 'rb') as f:
-        return pickle.load(f)
 
 class Recognizer:
     """
@@ -50,8 +47,10 @@ class Recognizer:
         Initializing func.
         :param path_to_dict: path to your config if you used it before. You can always load it later.
         """
+        self.log = {}
         self.has_faces = False
         self.has_password = False
+
         self.resnet = InceptionResnetV1(pretrained='vggface2').eval()
         self.mtcnn = MTCNN(
             image_size=224, keep_all=True, thresholds=[0.4, 0.5, 0.5], min_face_size=60
@@ -67,6 +66,19 @@ class Recognizer:
     def _encode(self, img):
         res = self.resnet(torch.Tensor(img))
         return res
+
+    def save_log(self,
+                 path_for_saving : str,
+                 clear_after_saving : bool = False):
+        """
+        You can save information about persons that recognition model detected
+        :param path_for_saving: path for saving file
+        :return:
+        """
+        with open(path_for_saving, 'w') as f:
+            json.dump(self.log, f)
+        if clear_after_saving:
+            self.log.clear()
 
     def _take_photo(self,
                     cam : int = 0):
@@ -134,7 +146,7 @@ class Recognizer:
         """
         with open(f"{name_for_file}.pkl", 'wb') as f:
             f.write(requests.get(url).content)
-        self.all_people_faces = _load("url_core.pkl")
+        self.all_people_faces = _load(f"{name_for_file}.pkl")
 
     def save_core(self, path):
         """
@@ -195,16 +207,24 @@ class Recognizer:
     def launch(self,
                cam: int = 0,
                threshold: float = 0.7,
-               stop_when_rec = False):
+               stop_when_rec : bool = False,
+               write_logs : bool = False,
+               write_logs_every : int = 500):
         """
 
         :param cam: if you have several cameras, you can specify which one you will use.
         :param threshold: confidence threshold: less = more strict
         :param stop_when_rec: if Recognizer detected right person, it can stop using camera.
+        :param write_logs: If you want to save detection model's predictions with its time, choose True
+        :param write_logs_every: How many times model have to save her predictions to the RAM,
+        before the log will be saved as a file.
         :return:
         """
         assert self.has_faces, "You didn't add any faces"
         vdo = cv2.VideoCapture(cam)
+        saving_dir = str(datetime.now())
+        if write_logs:
+            os.mkdir(saving_dir)
 
         while vdo.grab():
             _, img0 = vdo.retrieve()
@@ -230,6 +250,12 @@ class Recognizer:
                             break
                     else:
                         print("Wrong person detected!")
+
+                    if write_logs:
+                        self.log[str(datetime.now())] = min_key
+                        if len(self.log.keys()) == write_logs_every:
+                            self.save_log(path_for_saving=os.path.join(saving_dir, str(datetime.now())),
+                                          clear_after_saving=True)
         vdo.release()
 
 class Unlocker(Recognizer):
@@ -376,5 +402,3 @@ class Unlocker(Recognizer):
             else:
                 return True
         return False
-
-face_unlocker = Unlocker()
