@@ -402,7 +402,3 @@ class Unlocker(Recognizer):
             else:
                 return True
         return False
-
-rec = Recognizer()
-rec.add_face()
-rec.launch(write_logs=True, write_logs_every=10)
