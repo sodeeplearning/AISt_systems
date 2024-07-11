@@ -8,3 +8,25 @@
 
     You can look at these libraries in folders with corresponding names
 """
+import cv2
+
+def test_camera(camera_index : int = 0):
+    """
+    Before using neural networks you can test your cameras.
+    :param camera_index:
+    :return:
+    """
+    cam = cv2.VideoCapture(camera_index)
+    while True:
+        ret, frame = cam.read()
+        if not ret:
+            print("failed to grab frame")
+            break
+        cv2.imshow("Testing camera, 'Esc' to close", frame)
+        k = cv2.waitKey(1)
+        if k % 256 == 27:
+            # ESC pressed
+            print("Escape hit, closing...")
+            break
+    cam.release()
+    cv2.destroyAllWindows()

@@ -1,8 +1,11 @@
 import hashlib
 import pickle
+import cv2
+import numpy as np
+
 
 def get_hash(object : str,
-            hash_method : str = 'sha256'):
+            hash_method : str = 'sha256') -> str:
     """
     A function to get a hash code of your object.
 
@@ -32,7 +35,7 @@ def get_hash(object : str,
                'md5' : hashlib.md5}
 
     hash_func = mapping[hash_method]
-    return hash_func(b'f"{object}"').hexdigest()
+    return hash_func(object.encode('utf-8')).hexdigest()
 
 def _save(object, path):
     with open(path, 'wb') as f:
@@ -41,3 +44,6 @@ def _save(object, path):
 def _load(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
+
+def _decode(image_bytes : bytes) -> np.array:
+    return cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)

@@ -3,7 +3,7 @@ import cv2
 from datetime import datetime
 import os
 import json
-
+from aist_systems.utils import _decode
 
 class Watcher2D:
     """
@@ -26,7 +26,7 @@ class Watcher2D:
         self.model_classes = list(self.classes.keys())
         self.log = {}
 
-    def _data_perf(self, detection_output):
+    def _data_perf(self, detection_output) -> dict:
         output = detection_output.boxes
         classes = output.cls.tolist()
         bboxes = output.xyxyn.tolist()
@@ -72,6 +72,19 @@ class Watcher2D:
             json.dump(self.log, f)
         if clear_after_save:
             self.log.clear()
+
+    def pred_from_bytes(self,
+                        image_bytes : bytes,
+                        show : bool = True) -> dict:
+        """
+        If you have an image in bytes, you can get prediction of the model via this function.
+        :param image_bytes: Your image's bytes.
+        :param show: If you want to be shown a result of the model - 'True'
+        :return: Dict represents classes, bounding boxes, and the time when prediction was made.
+        """
+        image = _decode(image_bytes=image_bytes)
+        output = self.detection_model.predict(image, show=show)[0]
+        return self._data_perf(output)
 
     def start (self,
                show : bool = True,

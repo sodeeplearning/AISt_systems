@@ -1,15 +1,14 @@
-import os.path
-
+import os
 import cv2
 import requests
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from types import MethodType
 from time import sleep
-from aist_systems import utils
-from aist_systems.utils import _load, _save
+from aist_systems.utils import _load, _save, _decode, get_hash
 from datetime import datetime
 import json
+
 
 def _detect_box(self, img, save_path=None):
     # Detect faces
@@ -83,6 +82,7 @@ class Recognizer:
                     cam : int = 0):
         cam = cv2.VideoCapture(cam)
         is_taken = False
+        received_image = None
 
         while True:
             ret, frame = cam.read()
@@ -203,6 +203,32 @@ class Recognizer:
         if cropped_image != None:
             self.all_people_faces[name] = self._encode(cropped_image).squeeze()
 
+    def pred_from_bytes(self,
+                        image_bytes : bytes,
+                        threshold : float = 0.7) -> str:
+        """
+        If you have an image in bytes, you can get prediction of the model via this function.
+        :param image_bytes: Image in bytes.
+        :param threshold: Confidence threshold. Less = more confidence
+        :return: Returns the most similar User to the image,
+        Or 'Wrong person' if detected someone wrong,
+        Or returns 'No one was detected'.
+        """
+        image = _decode(image_bytes=image_bytes)
+        batch_boxes, cropped_images = self.mtcnn.detect_box(image)
+        min_key = "No one was detected"
+
+        if cropped_images is not None:
+            for box, cropped in zip(batch_boxes, cropped_images):
+                img_embedding = self._encode(cropped.unsqueeze(0))
+                detect_dict = {}
+                for k, v in self.all_people_faces.items():
+                    detect_dict[k] = (v - img_embedding).norm().item()
+                min_key = min(detect_dict, key=detect_dict.get)
+                if detect_dict[min_key] >= threshold:
+                    min_key = 'Wrong person'
+        return min_key
+
     def launch(self,
                cam: int = 0,
                threshold: float = 0.7,
@@ -287,7 +313,8 @@ class Unlocker(Recognizer):
     def launch(self,
                cam: int = 0,
                threshold: float = 0.7,
-               num_of_attempts : int = 10):
+               num_of_attempts : int = 10,
+               **kwargs) -> bool:
         """
         Face recognition part of Unlocker. If you need whole unlock-system use Unlocker.unlock()
         :param cam: if you have several cameras, you can choose which one you will use.
@@ -356,7 +383,7 @@ class Unlocker(Recognizer):
     def _password_checker(self):
 
         input_object = input("Enter your password: \n")
-        hashed_object = utils.get_hash(object = input_object,
+        hashed_object = get_hash(object = input_object,
                                        hash_method = self._hash_method)
         if hashed_object == self._password:
             return True
@@ -366,7 +393,7 @@ class Unlocker(Recognizer):
                cam: int = 0,
                threshold: float = 0.7,
                num_of_attempts: int = 10,
-               password_attempts : int = 3):
+               password_attempts : int = 3) -> bool:
         """
         Main function of Unlocker. Works with your cameras online.
         :param cam: if you have several cameras, you can choose which one you will use.
