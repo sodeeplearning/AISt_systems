@@ -1,9 +1,10 @@
+import torch.cuda
 from ultralytics import YOLO
 import cv2
 from datetime import datetime
 import os
 import json
-from aist_systems.utils import _decode
+from aist_systems.utils import _decode, _only_digits
 
 class Watcher2D:
     """
@@ -90,7 +91,8 @@ class Watcher2D:
                show : bool = True,
                cam_index : int = 0,
                write_logs : bool = True,
-               save_logs_every : int = 1000):
+               save_logs_every : int = 1000,
+               use_cuda = False):
         """
         Main function of Watcher2D class.
         You can look at detection model's predictions at realtime.
@@ -100,7 +102,9 @@ class Watcher2D:
         :param save_logs_every: How many times Watcher2D will write predictions to RAM before save it as a file.
         :return:
         """
-        saving_lib = str(datetime.now())
+        if use_cuda:
+            self.detection_model.cuda()
+        saving_lib = _only_digits(str(datetime.now()))
         if write_logs:
             os.mkdir(saving_lib)
         camera = cv2.VideoCapture(cam_index)
@@ -113,6 +117,6 @@ class Watcher2D:
                     self.log[str(datetime.now())] = self._data_perf(current_output)
                     # Saving logs
                     if len(self.log.keys()) == save_logs_every:
-                        self.save_log(path_to_save=os.path.join(saving_lib, str(datetime.now()) + '.json'),
+                        self.save_log(path_to_save=os.path.join(saving_lib, _only_digits(str(datetime.now())) + '.json'),
                                       clear_after_save=True)
         camera.release()

@@ -384,7 +384,7 @@ class Unlocker(Recognizer):
 
         input_object = input("Enter your password: \n")
         hashed_object = get_hash(object = input_object,
-                                       hash_method = self._hash_method)
+                                hash_method = self._hash_method)
         if hashed_object == self._password:
             return True
         return False

@@ -47,3 +47,7 @@ def _load(path):
 
 def _decode(image_bytes : bytes) -> np.array:
     return cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
+
+def _only_digits(string : str) -> str:
+    answer_massive = [i for i in string if i.isdigit()]
+    return "".join(answer_massive)
