@@ -10,7 +10,8 @@
 """
 import cv2
 
-def test_camera(camera_index : int = 0):
+
+def test_camera(camera_index: int = 0) -> None:
     """
     Before using neural networks you can test your cameras.
     :param camera_index:

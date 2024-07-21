@@ -5,7 +5,7 @@ import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from types import MethodType
 from time import sleep
-from aist_systems.utils import _load, _save, _decode, get_hash
+from aist_systems.utils import load, save, decode, get_hash
 from datetime import datetime
 import json
 
@@ -21,6 +21,7 @@ def _detect_box(self, img, save_path=None):
     # Extract faces
     faces = self.extract(img, batch_boxes, save_path)
     return batch_boxes, faces
+
 
 class Recognizer:
     """
@@ -55,22 +56,23 @@ class Recognizer:
         )
         self.mtcnn.detect_box = MethodType(_detect_box, self.mtcnn)
 
-        if path_to_dict != None:
-            self.all_people_faces = _load(path_to_dict)
+        if path_to_dict is not None:
+            self.all_people_faces = load(path_to_dict)
         else:
-            self.load_core_from_url(url = "https://storage.yandexcloud.net/facecore/core.pkl",
-                                    name_for_file= "core")
+            self.load_core_from_url(url="https://storage.yandexcloud.net/facecore/core.pkl",
+                                    name_for_file="core")
 
     def _encode(self, img):
         res = self.resnet(torch.Tensor(img))
         return res
 
     def save_log(self,
-                 path_for_saving : str,
-                 clear_after_saving : bool = False):
+                 path_for_saving: str,
+                 clear_after_saving: bool = False):
         """
         You can save information about persons that recognition model detected
         :param path_for_saving: path for saving file
+        :param clear_after_saving: if you need, you can clear log files from RAM after saving.
         :return:
         """
         with open(path_for_saving, 'w') as f:
@@ -79,7 +81,7 @@ class Recognizer:
             self.log.clear()
 
     def _take_photo(self,
-                    cam : int = 0):
+                    cam: int = 0):
         cam = cv2.VideoCapture(cam)
         is_taken = False
         received_image = None
@@ -128,24 +130,25 @@ class Recognizer:
         :param path_to_core: path to your config file
         :return:
         """
-        loaded_object = _load(path_to_core)
-        if type(loaded_object) == dict:
+        loaded_object = load(path_to_core)
+        if type(loaded_object) is dict:
             self.all_people_faces = loaded_object
         else:
             print(f"The object can't be converted to a core (Need dict, got {type(loaded_object)})")
 
     def load_core_from_url(self,
-                           url : str,
-                           name_for_file : str):
+                           url: str,
+                           name_for_file: str):
         """
         If you used Recognizer before and saved your config file on a web page,
         you can load it via this function specifying direct link to this file.
         :param url: url (direct link) to your config file
+        :param name_for_file: path to loading core.
         :return:
         """
         with open(f"{name_for_file}.pkl", 'wb') as f:
             f.write(requests.get(url).content)
-        self.all_people_faces = _load(f"{name_for_file}.pkl")
+        self.all_people_faces = load(f"{name_for_file}.pkl")
 
     def save_core(self, path):
         """
@@ -154,7 +157,7 @@ class Recognizer:
         :param path: path where file will be saved.
         :return:
         """
-        _save(self.all_people_faces, path)
+        save(self.all_people_faces, path)
 
     def add_face(self,
                  name=None):
@@ -171,13 +174,13 @@ class Recognizer:
         :param name: You can add a name to the user. Default: User <N>
         :return:
         """
-        if name == None:
+        if name is None:
             name = f"User {len(self.all_people_faces.keys())}"
 
         received_image = self._take_photo()
-        if type(received_image) != type(None):
+        if type(received_image) is not type(None):
             batch_boxes, cropped_image = self.mtcnn.detect_box(received_image)
-            if cropped_image != None:
+            if cropped_image is not None:
                 img_embedding = self._encode(cropped_image)
                 self.all_people_faces[name] = img_embedding
                 self.has_faces = True
@@ -195,17 +198,17 @@ class Recognizer:
         Default : User <N>
         :return:
         """
-        if name == None:
+        if name is None:
             name = f"User {len(self.all_people_faces.keys())}"
 
         current_image = cv2.imread(path_to_image)
         cropped_image = self.mtcnn(current_image)
-        if cropped_image != None:
+        if cropped_image is not None:
             self.all_people_faces[name] = self._encode(cropped_image).squeeze()
 
-    def pred_from_bytes(self,
-                        image_bytes : bytes,
-                        threshold : float = 0.7) -> str:
+    def predict_from_bytes(self,
+                           image_bytes: bytes,
+                           threshold: float = 0.7) -> str:
         """
         If you have an image in bytes, you can get prediction of the model via this function.
         :param image_bytes: Image in bytes.
@@ -214,7 +217,7 @@ class Recognizer:
         Or 'Wrong person' if detected someone wrong,
         Or returns 'No one was detected'.
         """
-        image = _decode(image_bytes=image_bytes)
+        image = decode(image_bytes=image_bytes)
         batch_boxes, cropped_images = self.mtcnn.detect_box(image)
         min_key = "No one was detected"
 
@@ -232,9 +235,9 @@ class Recognizer:
     def launch(self,
                cam: int = 0,
                threshold: float = 0.7,
-               stop_when_rec : bool = False,
-               write_logs : bool = False,
-               write_logs_every : int = 500):
+               stop_when_rec: bool = False,
+               write_logs: bool = False,
+               write_logs_every: int = 500):
         """
 
         :param cam: if you have several cameras, you can specify which one you will use.
@@ -258,7 +261,6 @@ class Recognizer:
             if cropped_images is not None:
                 for box, cropped in zip(batch_boxes, cropped_images):
                     wrong_person = False
-                    x, y, x2, y2 = [int(x) for x in box]
                     img_embedding = self._encode(cropped.unsqueeze(0))
                     detect_dict = {}
                     for k, v in self.all_people_faces.items():
@@ -282,6 +284,7 @@ class Recognizer:
                             self.save_log(path_for_saving=os.path.join(saving_dir, str(datetime.now()) + '.json'),
                                           clear_after_saving=True)
         vdo.release()
+
 
 class Unlocker(Recognizer):
     """
@@ -313,7 +316,7 @@ class Unlocker(Recognizer):
     def launch(self,
                cam: int = 0,
                threshold: float = 0.7,
-               num_of_attempts : int = 10,
+               num_of_attempts: int = 10,
                **kwargs) -> bool:
         """
         Face recognition part of Unlocker. If you need whole unlock-system use Unlocker.unlock()
@@ -336,7 +339,6 @@ class Unlocker(Recognizer):
             if cropped_images is not None:
                 for box, cropped in zip(batch_boxes, cropped_images):
                     wrong_person = False
-                    x, y, x2, y2 = [int(x) for x in box]
                     img_embedding = self._encode(cropped.unsqueeze(0))
                     detect_dict = {}
                     for k, v in self.all_people_faces.items():
@@ -353,14 +355,13 @@ class Unlocker(Recognizer):
 
                     if not wrong_person:
                         print(f"Hi, {min_key}")
-                        returning_flag = True
                         return True
                     else:
                         print("Wrong person detected!")
 
     def set_password(self,
-                     object : str,
-                     hash_method : str = 'sha256'):
+                     hash_object: str,
+                     hash_method: str = 'sha256'):
         """
         If face recognizer didn't recognize the face, you can enter the password.
 
@@ -371,20 +372,20 @@ class Unlocker(Recognizer):
             3) face_unlocker.set_password(<output's string>)
 
             Then, if your face unlocker says that can't recognize face, you can enter your password.
-        :param object: Hash string of your password
+        :param hash_object: Hash string of your password
         :param hash_method: If you change hash method from default (sha256),
         you have to specify which method you use.
         :return:
         """
         self.has_password = True
-        self._password = object
+        self._password = hash_object
         self._hash_method = hash_method
 
     def _password_checker(self):
 
         input_object = input("Enter your password: \n")
-        hashed_object = get_hash(object = input_object,
-                                hash_method = self._hash_method)
+        hashed_object = get_hash(hash_object=input_object,
+                                 hash_method=self._hash_method)
         if hashed_object == self._password:
             return True
         return False
@@ -393,7 +394,7 @@ class Unlocker(Recognizer):
                cam: int = 0,
                threshold: float = 0.7,
                num_of_attempts: int = 10,
-               password_attempts : int = 3) -> bool:
+               password_attempts: int = 3) -> bool:
         """
         Main function of Unlocker. Works with your cameras online.
         :param cam: if you have several cameras, you can choose which one you will use.
