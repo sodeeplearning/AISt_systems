@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .idea
 test.py
+core.pkl
 # C extensions
 *.so
 

@@ -77,6 +77,7 @@ class Recognizer:
         """
         with open(path_for_saving, 'w') as f:
             json.dump(self.log, f)
+
         if clear_after_saving:
             self.log.clear()
 
@@ -160,7 +161,8 @@ class Recognizer:
         save(self.all_people_faces, path)
 
     def add_face(self,
-                 name=None):
+                 name=None,
+                 camera_index: int = 0):
         """
         Adding face to recognize it. When yoy will launch this function,
         you will have a window with your camera filming you.
@@ -172,12 +174,13 @@ class Recognizer:
         If you won't make a photo, nothing will be added to a Recognizer.
 
         :param name: You can add a name to the user. Default: User <N>
+        :param camera_index: If you have several cameras, you can specify which one you will use.
         :return:
         """
         if name is None:
             name = f"User {len(self.all_people_faces.keys())}"
 
-        received_image = self._take_photo()
+        received_image = self._take_photo(cam=camera_index)
         if type(received_image) is not type(None):
             batch_boxes, cropped_image = self.mtcnn.detect_box(received_image)
             if cropped_image is not None:
@@ -239,7 +242,7 @@ class Recognizer:
                write_logs: bool = False,
                write_logs_every: int = 500):
         """
-
+        Launch recognizer.
         :param cam: if you have several cameras, you can specify which one you will use.
         :param threshold: confidence threshold: less = more strict
         :param stop_when_rec: if Recognizer detected right person, it can stop using camera.
