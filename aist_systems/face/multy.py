@@ -8,7 +8,8 @@ class Recognizer(face.Recognizer):
     """
     Recognizer for working with several cameras
     """
-    def single_thread(self,cameras: list[int],
+    def single_thread(self,
+                      cameras: list[int],
                       threshold: float = 0.7,
                       write_logs: bool = False,
                       write_logs_every: int = 500,

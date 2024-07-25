@@ -48,7 +48,6 @@ class Recognizer:
         """
         self.log = {}
         self.has_faces = False
-        self.has_password = False
 
         self.resnet = InceptionResnetV1(pretrained='vggface2').eval()
         self.mtcnn = MTCNN(
@@ -316,6 +315,16 @@ class Unlocker(Recognizer):
     If you saved your config file on a web page, you can load it:
         face_unlocker.load_core_from_url(<url to the core>)
     """
+    def __init__(self):
+        """
+        Init function of an Unlocker.
+        """
+        super().__init__()
+
+        self.has_password = False
+        self._password = None
+        self._hash_method = None
+
     def launch(self,
                cam: int = 0,
                threshold: float = 0.7,
