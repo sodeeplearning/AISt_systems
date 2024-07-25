@@ -6,6 +6,10 @@ import os
 
 
 class Watcher2D(watching.Watcher2D):
+    """
+    If you have several cameras, you this class to you them.
+    This class is an addition to a Watcher2D
+    """
     @staticmethod
     def _data_perf(detection_output,
                    camera_index: int = 0) -> dict:

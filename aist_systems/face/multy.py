@@ -10,7 +10,8 @@ class Recognizer(face.Recognizer):
     """
     def single_thread(self,cameras: list[int],
                       threshold: float = 0.7,
-                      write_logs: bool = False,write_logs_every: int = 500,
+                      write_logs: bool = False,
+                      write_logs_every: int = 500,
                       print_logs: bool = True):
         """
         If you have some cameras, you can use them all in this func.
