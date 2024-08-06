@@ -76,7 +76,16 @@ class DepthEstimator:
         """Get depth map from np.ndarray."""
         return self._output_perform(self.model(Image.fromarray(array)))
 
-    def from_camera(
+    def from_camera(self, cam_ind: int = 0):
+        """Get depth map from a camera device (single object)"""
+        camera = cv2.VideoCapture(cam_ind)
+        while camera.grab():
+            flag, frame = camera.retrieve()
+            if flag:
+                return self.from_ndarray(frame)
+        raise "Failed to capture an image!"
+
+    def from_camera_stream(
             self,
             cam_ind: int = 0,
             single_object: bool = False,
