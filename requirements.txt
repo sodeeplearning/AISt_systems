@@ -4,3 +4,7 @@ torch~=2.2.2
 jupyter==1.0.0
 ultralytics~=8.2.52
 numpy~=1.26.4
+pillow~=10.4.0
+matplotlib~=3.8.4
+transformers~=4.42.4
+ipython~=8.23.0

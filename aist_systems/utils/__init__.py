@@ -2,6 +2,7 @@ import hashlib
 import pickle
 import cv2
 import numpy as np
+from PIL import Image
 
 
 def get_hash(hash_object: str,
@@ -55,3 +56,8 @@ def decode(image_bytes: bytes) -> np.array:
 def only_digits(string: str) -> str:
     answer_massive = [i for i in string if i.isdigit()]
     return "".join(answer_massive)
+
+
+def pil_image_from_bytes(image_bytes: bytes):
+    cv_image = decode(image_bytes)
+    return Image.fromarray(cv_image)

@@ -2,6 +2,7 @@ import aist_systems.face as face
 import cv2
 from datetime import datetime
 import os
+import threading
 
 
 class Recognizer(face.Recognizer):
@@ -26,8 +27,8 @@ class Recognizer(face.Recognizer):
         :param print_logs: 'True' if you want to see logs on your console.
         :return:
         """
-
         assert self.has_faces, "You didn't add any faces"
+
         devices = [cv2.VideoCapture(cam_ind) for cam_ind in cameras]
         saving_dir = str(datetime.now())
 
@@ -65,5 +66,32 @@ class Recognizer(face.Recognizer):
                                 self.save_log(path_for_saving=os.path.join(saving_dir, str(datetime.now()) + '.json'),
                                               clear_after_saving=True)
 
-    def multy_thread(self):
-        pass
+    def multy_thread(self,
+                     cameras: list[int],
+                     threshold: float = 0.7,
+                     write_logs: bool = False,
+                     write_logs_every: int = 500,
+                     print_logs: bool = True):
+        """Get predictions from several cameras via multy-threading.
+
+        :param cameras: Specify cameras' indexes.
+        :param threshold: confidence threshold.
+        :param write_logs: 'True' if you want to write logs.
+        :param write_logs_every: How many times logs will be stored in RAM before saving.
+        :param print_logs: 'True' if you want to see logs on your console.
+        :return:
+        """
+        func_kwargs = {'threshold': threshold,
+                       'write_logs': write_logs,
+                       'write_logs_every': write_logs_every,
+                       'print_logs': print_logs}
+        thread_list = []
+
+        for current_camera in cameras:
+            func_kwargs['cameras'] = [current_camera]
+            thread_list.append(threading.Thread(target=self.single_thread, kwargs=func_kwargs))
+
+        for ind, current_thread in enumerate(thread_list, start=1):
+            current_thread.run()
+            if print_logs:
+                print(f"Thread {ind} has been started")

@@ -239,7 +239,8 @@ class Recognizer:
                threshold: float = 0.7,
                stop_when_rec: bool = False,
                write_logs: bool = False,
-               write_logs_every: int = 500):
+               write_logs_every: int = 500,
+               print_logs: bool = True):
         """
         Launch recognizer.
         :param cam: if you have several cameras, you can specify which one you will use.
@@ -248,6 +249,7 @@ class Recognizer:
         :param write_logs: If you want to save detection model's predictions with its time, choose True
         :param write_logs_every: How many times model have to save her predictions to the RAM,
         before the log will be saved as a file.
+        :param print_logs: True - if you want to see logs in your console.
         :return:
         """
         assert self.has_faces, "You didn't add any faces"
@@ -273,12 +275,13 @@ class Recognizer:
                         min_key = 'Wrong person'
                         wrong_person = True
 
-                    if not wrong_person:
-                        print(f"Hi, {min_key}")
-                        if stop_when_rec:
-                            break
-                    else:
-                        print("Wrong person detected!")
+                    if print_logs:
+                        if not wrong_person:
+                            print(f"Hi, {min_key}")
+                            if stop_when_rec:
+                                break
+                        else:
+                            print("Wrong person detected!")
 
                     if write_logs:
                         self.log[str(datetime.now())] = min_key
